@@ -7,12 +7,8 @@ import flasgger
 
 try:
     from marshmallow import Schema, fields
-    from apispec.ext.marshmallow import openapi
+    from apispec.ext.marshmallow import MarshmallowPlugin
     from apispec import APISpec as BaseAPISpec
-
-    openapi_converter = openapi.OpenAPIConverter(openapi_version='2.0')
-    schema2jsonschema = openapi_converter.schema2jsonschema
-    schema2parameters = openapi_converter.schema2parameters
 except ImportError:
     Schema = None
     fields = None
@@ -32,6 +28,14 @@ class APISpec(BaseAPISpec):
         """
         if Schema is None:
             raise RuntimeError('Please install marshmallow and apispec')
+
+        global schema2jsonschema
+        global schema2parameters
+
+        for plugin in self.plugins:
+            if isinstance(plugin, MarshmallowPlugin):
+                schema2jsonschema = plugin.openapi.schema2jsonschema
+                schema2parameters = plugin.openapi.schema2parameters
 
         return flasgger.utils.apispec_to_template(
             app,
